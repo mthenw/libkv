@@ -5,6 +5,8 @@ go:
 #  - 1.4
 # see https://github.com/moovweb/gvm/pull/116 for why Go 1.4 is currently disabled
 
+# test
+
 # let us have speedy Docker-based Travis workers
 sudo: false
 
