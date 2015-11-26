@@ -16,6 +16,8 @@ const (
 	ETCD Backend = "etcd"
 	// ZK backend
 	ZK Backend = "zk"
+	// IRMIN backend
+	IRMIN Backend = "irmin"
 	// BOLTDB backend
 	BOLTDB Backend = "boltdb"
 )

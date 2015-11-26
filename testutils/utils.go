@@ -145,7 +145,7 @@ func testWatch(t *testing.T, kv store.Store) {
 			}
 			eventCount++
 			// We received all the events we wanted to check
-			if eventCount >= 4 {
+			if eventCount >= 3 {
 				return
 			}
 		case <-time.After(4 * time.Second):
