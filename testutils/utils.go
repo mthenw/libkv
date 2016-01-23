@@ -320,48 +320,57 @@ func testAtomicDelete(t *testing.T, kv store.Store) {
 }
 
 func testLockUnlock(t *testing.T, kv store.Store) {
-	key := "testLockUnlock"
+	createdKey := "testLockKeyExists"
 	value := []byte("bar")
 
-	// We should be able to create a new lock on key
-	lock, err := kv.NewLock(key, &store.LockOptions{Value: value, TTL: 2 * time.Second})
-	assert.NoError(t, err)
-	assert.NotNil(t, lock)
+	// Put the key
+	err := kv.Put(createdKey, value, nil)
+	assert.NoError(t, err, "Can''t create the key for lock test with existing key")
 
-	// Lock should successfully succeed or block
-	lockChan, err := lock.Lock(nil)
-	assert.NoError(t, err)
-	assert.NotNil(t, lockChan)
+	for _, key := range []string{
+		"testLockUnlock",
+		createdKey,
+	} {
+		// We should be able to create a new lock on key
+		lock, err := kv.NewLock(key, &store.LockOptions{Value: value, TTL: 2 * time.Second})
+		assert.NoError(t, err)
+		assert.NotNil(t, lock)
 
-	// Get should work
-	pair, err := kv.Get(key)
-	assert.NoError(t, err)
-	if assert.NotNil(t, pair) {
-		assert.NotNil(t, pair.Value)
+		// Lock should successfully succeed or block
+		lockChan, err := lock.Lock(nil)
+		assert.NoError(t, err)
+		assert.NotNil(t, lockChan)
+
+		// Get should work
+		pair, err := kv.Get(key)
+		assert.NoError(t, err)
+		if assert.NotNil(t, pair) {
+			assert.NotNil(t, pair.Value)
+		}
+		assert.Equal(t, pair.Value, value)
+		assert.NotEqual(t, pair.LastIndex, 0)
+
+		// Unlock should succeed
+		err = lock.Unlock()
+		assert.NoError(t, err)
+
+		// Lock should succeed again
+		lockChan, err = lock.Lock(nil)
+		assert.NoError(t, err)
+		assert.NotNil(t, lockChan)
+
+		// Get should work
+		pair, err = kv.Get(key)
+		assert.NoError(t, err)
+		if assert.NotNil(t, pair) {
+			assert.NotNil(t, pair.Value)
+		}
+		assert.Equal(t, pair.Value, value)
+		assert.NotEqual(t, pair.LastIndex, 0)
+
+		err = lock.Unlock()
+		assert.NoError(t, err)
 	}
-	assert.Equal(t, pair.Value, value)
-	assert.NotEqual(t, pair.LastIndex, 0)
-
-	// Unlock should succeed
-	err = lock.Unlock()
-	assert.NoError(t, err)
-
-	// Lock should succeed again
-	lockChan, err = lock.Lock(nil)
-	assert.NoError(t, err)
-	assert.NotNil(t, lockChan)
-
-	// Get should work
-	pair, err = kv.Get(key)
-	assert.NoError(t, err)
-	if assert.NotNil(t, pair) {
-		assert.NotNil(t, pair.Value)
-	}
-	assert.Equal(t, pair.Value, value)
-	assert.NotEqual(t, pair.LastIndex, 0)
-
-	err = lock.Unlock()
-	assert.NoError(t, err)
 }
 
 func testLockTTL(t *testing.T, kv store.Store, otherConn store.Store) {
